@@ -3,22 +3,19 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-
 namespace Magento\Elasticsearch\Elasticsearch5\SearchAdapter;
 
-use InvalidArgumentException;
-use Magento\Elasticsearch\Elasticsearch5\SearchAdapter\Query\Builder as QueryBuilder;
-use Magento\Elasticsearch\SearchAdapter\Filter\Builder as FilterBuilder;
-use Magento\Elasticsearch\SearchAdapter\Query\Builder\MatchQuery as MatchQueryBuilder;
+use Magento\Framework\Search\RequestInterface;
+use Magento\Framework\Search\Request\QueryInterface as RequestQueryInterface;
 use Magento\Framework\Search\Request\Query\BoolExpression as BoolQuery;
 use Magento\Framework\Search\Request\Query\Filter as FilterQuery;
-use Magento\Framework\Search\Request\Query\MatchQuery;
-use Magento\Framework\Search\Request\QueryInterface as RequestQueryInterface;
-use Magento\Framework\Search\RequestInterface;
+use Magento\Framework\Search\Request\Query\Match as MatchQuery;
+use Magento\Elasticsearch\Elasticsearch5\SearchAdapter\Query\Builder as QueryBuilder;
+use Magento\Elasticsearch\SearchAdapter\Query\Builder\Match as MatchQueryBuilder;
+use Magento\Elasticsearch\SearchAdapter\Filter\Builder as FilterBuilder;
 
 /**
- * Mapper class for Elasticsearch5
- *
+ * Mapper class
  * @api
  * @since 100.2.2
  */
@@ -80,7 +77,8 @@ class Mapper
             $searchQuery['body']['query']['bool']['minimum_should_match'] = 1;
         }
 
-        return $this->queryBuilder->initAggregations($request, $searchQuery);
+        $searchQuery = $this->queryBuilder->initAggregations($request, $searchQuery);
+        return $searchQuery;
     }
 
     /**
@@ -90,7 +88,7 @@ class Mapper
      * @param array $selectQuery
      * @param string $conditionType
      * @return array
-     * @throws InvalidArgumentException
+     * @throws \InvalidArgumentException
      * @since 100.2.2
      */
     protected function processQuery(
@@ -116,10 +114,7 @@ class Mapper
                 $selectQuery = $this->processFilterQuery($requestQuery, $selectQuery, $conditionType);
                 break;
             default:
-                throw new InvalidArgumentException(sprintf(
-                    'Unknown query type \'%s\'',
-                    $requestQuery->getType()
-                ));
+                throw new \InvalidArgumentException(sprintf('Unknown query type \'%s\'', $requestQuery->getType()));
         }
 
         return $selectQuery;
@@ -202,7 +197,7 @@ class Mapper
                 $filterQuery = $this->filterBuilder->build($query->getReference(), $conditionType);
                 foreach ($filterQuery['bool'] as $condition => $filter) {
                     $selectQuery['bool'][$condition]= array_merge(
-                        $selectQuery['bool'][$condition] ?? [],
+                        isset($selectQuery['bool'][$condition]) ? $selectQuery['bool'][$condition] : [],
                         $filter
                     );
                 }

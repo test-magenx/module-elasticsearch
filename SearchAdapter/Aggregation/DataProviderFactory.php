@@ -48,16 +48,12 @@ class DataProviderFactory
      * which will be recreated with its default configuration.
      *
      * @param DataProviderInterface $dataProvider
-     * @param QueryContainer|null $query
-     * @param string|null $aggregationFieldName
+     * @param QueryContainer $query
      * @return DataProviderInterface
      * @throws \LogicException when the query is missing but it required according to the QueryAwareInterface
      */
-    public function create(
-        DataProviderInterface $dataProvider,
-        QueryContainer $query = null,
-        ?string $aggregationFieldName = null
-    ) {
+    public function create(DataProviderInterface $dataProvider, QueryContainer $query = null)
+    {
         $result = $dataProvider;
         if ($dataProvider instanceof QueryAwareInterface) {
             if (null === $query) {
@@ -68,13 +64,7 @@ class DataProviderFactory
             }
 
             $className = get_class($dataProvider);
-            $result = $this->objectManager->create(
-                $className,
-                [
-                    'queryContainer' => $query,
-                    'aggregationFieldName' => $aggregationFieldName
-                ]
-            );
+            $result = $this->objectManager->create($className, ['queryContainer' => $query]);
         }
 
         return $result;

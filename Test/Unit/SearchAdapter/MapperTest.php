@@ -7,15 +7,13 @@ declare(strict_types=1);
 
 namespace Magento\Elasticsearch\Test\Unit\SearchAdapter;
 
-use InvalidArgumentException;
 use Magento\Elasticsearch\SearchAdapter\Filter\Builder as FilterBuilder;
 use Magento\Elasticsearch\SearchAdapter\Mapper;
 use Magento\Elasticsearch\SearchAdapter\Query\Builder as QueryBuilder;
-use Magento\Elasticsearch\SearchAdapter\Query\Builder\MatchQuery as MatchQueryBuilder;
+use Magento\Elasticsearch\SearchAdapter\Query\Builder\Match as MatchQueryBuilder;
 use Magento\Framework\Search\Request\FilterInterface;
 use Magento\Framework\Search\Request\Query\BoolExpression;
 use Magento\Framework\Search\Request\Query\Filter;
-use Magento\Framework\Search\Request\Query\MatchQuery;
 use Magento\Framework\Search\Request\QueryInterface;
 use Magento\Framework\Search\RequestInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager as ObjectManagerHelper;
@@ -53,18 +51,20 @@ class MapperTest extends TestCase
      */
     protected function setUp(): void
     {
-        $this->queryBuilder = $this->getMockBuilder(QueryBuilder::class)
+        $this->queryBuilder = $this->getMockBuilder(\Magento\Elasticsearch\SearchAdapter\Query\Builder::class)
             ->setMethods([
                 'initQuery',
                 'initAggregations',
             ])
             ->disableOriginalConstructor()
             ->getMock();
-        $this->matchQueryBuilder = $this->getMockBuilder(MatchQueryBuilder::class)
+        $this->matchQueryBuilder = $this->getMockBuilder(
+            \Magento\Elasticsearch\SearchAdapter\Query\Builder\Match::class
+        )
             ->setMethods(['build'])
             ->disableOriginalConstructor()
             ->getMock();
-        $this->filterBuilder = $this->getMockBuilder(FilterBuilder::class)
+        $this->filterBuilder = $this->getMockBuilder(\Magento\Elasticsearch\SearchAdapter\Filter\Builder::class)
             ->disableOriginalConstructor()
             ->getMock();
         $this->queryBuilder->expects($this->any())
@@ -101,7 +101,7 @@ class MapperTest extends TestCase
      */
     public function testBuildQueryFailure()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
 
         $request = $this->getMockBuilder(RequestInterface::class)
             ->disableOriginalConstructor()
@@ -137,7 +137,7 @@ class MapperTest extends TestCase
             ->setMethods(['getMust', 'getMustNot', 'getType', 'getShould', 'getReferenceType', 'getReference'])
             ->disableOriginalConstructor()
             ->getMock();
-        $matchQuery = $this->getMockBuilder(MatchQuery::class)
+        $matchQuery = $this->getMockBuilder(\Magento\Framework\Search\Request\Query\Match::class)
             ->disableOriginalConstructor()
             ->getMock();
         $filterQuery = $this->getMockBuilder($filterMock)
@@ -192,7 +192,7 @@ class MapperTest extends TestCase
     {
         return [
             [
-                'matchQuery', MatchQuery::class,
+                'matchQuery', \Magento\Framework\Search\Request\Query\Match::class,
                 'query', QueryInterface::class,
             ],
             [

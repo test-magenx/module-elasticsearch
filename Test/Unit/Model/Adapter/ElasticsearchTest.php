@@ -9,12 +9,10 @@ namespace Magento\Elasticsearch\Test\Unit\Model\Adapter;
 
 use Elasticsearch\Client;
 use Elasticsearch\Namespaces\IndicesNamespace;
-use Exception;
 use Magento\AdvancedSearch\Model\Client\ClientInterface as ElasticsearchClient;
 use Magento\AdvancedSearch\Model\Client\ClientOptionsInterface;
 use Magento\Catalog\Api\ProductAttributeRepositoryInterface;
 use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
-use Magento\Elasticsearch\Elasticsearch5\Model\Client\Elasticsearch;
 use Magento\Elasticsearch\Model\Adapter\BatchDataMapperInterface;
 use Magento\Elasticsearch\Model\Adapter\Elasticsearch as ElasticsearchAdapter;
 use Magento\Elasticsearch\Model\Adapter\FieldMapperInterface;
@@ -103,21 +101,29 @@ class ElasticsearchTest extends TestCase
     private $arrayManager;
 
     /**
-     * @inheritdoc
+     * Setup
+     *
+     * @return void
+     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
     protected function setUp(): void
     {
         $this->objectManager = new ObjectManagerHelper($this);
         $this->connectionManager = $this->getMockBuilder(ConnectionManager::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['getConnection'])
+            ->setMethods(['getConnection'])
             ->getMock();
         $this->fieldMapper = $this->getMockBuilder(FieldMapperInterface::class)
             ->disableOriginalConstructor()
             ->getMockForAbstractClass();
         $this->clientConfig = $this->getMockBuilder(Config::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['getIndexPrefix', 'getEntityType'])->getMock();
+            ->setMethods(
+                [
+                    'getIndexPrefix',
+                    'getEntityType',
+                ]
+            )->getMock();
         $this->indexBuilder = $this->getMockBuilder(BuilderInterface::class)
             ->disableOriginalConstructor()
             ->getMockForAbstractClass();
@@ -125,28 +131,35 @@ class ElasticsearchTest extends TestCase
             ->disableOriginalConstructor()
             ->getMockForAbstractClass();
         $elasticsearchClientMock = $this->getMockBuilder(Client::class)
-            ->onlyMethods(['indices', 'ping', 'bulk', 'search'])
+            ->setMethods(
+                [
+                    'indices',
+                    'ping',
+                    'bulk',
+                    'search',
+                ]
+            )
             ->disableOriginalConstructor()
             ->getMock();
         $indicesMock = $this->getMockBuilder(IndicesNamespace::class)
-            ->onlyMethods(
+            ->setMethods(
                 [
                     'exists',
                     'getSettings',
                     'create',
                     'putMapping',
+                    'deleteMapping',
                     'existsAlias',
                     'updateAliases',
                     'stats'
                 ]
             )
-            ->addMethods(['deleteMapping'])
             ->disableOriginalConstructor()
             ->getMock();
         $elasticsearchClientMock->expects($this->any())
             ->method('indices')
             ->willReturn($indicesMock);
-        $this->client = $this->getMockBuilder(Elasticsearch::class)
+        $this->client = $this->getMockBuilder(\Magento\Elasticsearch\Elasticsearch5\Model\Client\Elasticsearch::class)
             ->setConstructorArgs(
                 [
                     'options' => $this->getClientOptions(),
@@ -165,10 +178,10 @@ class ElasticsearchTest extends TestCase
                         'type' => 'string',
                         'fields' => [
                             'keyword' => [
-                                'type' => "keyword"
-                            ]
-                        ]
-                    ]
+                                'type' => "keyword",
+                            ],
+                        ],
+                    ],
                 ]
             );
         $this->clientConfig->expects($this->any())
@@ -177,13 +190,15 @@ class ElasticsearchTest extends TestCase
         $this->clientConfig->expects($this->any())
             ->method('getEntityType')
             ->willReturn('product');
-        $this->indexNameResolver = $this->getMockBuilder(IndexNameResolver::class)
-            ->onlyMethods(
+        $this->indexNameResolver = $this->getMockBuilder(
+            IndexNameResolver::class
+        )
+            ->setMethods(
                 [
                     'getIndexName',
                     'getIndexNamespace',
                     'getIndexFromAlias',
-                    'getIndexNameForAlias'
+                    'getIndexNameForAlias',
                 ]
             )
             ->disableOriginalConstructor()
@@ -201,7 +216,7 @@ class ElasticsearchTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
         $this->model = $this->objectManager->getObject(
-            ElasticsearchAdapter::class,
+            \Magento\Elasticsearch\Model\Adapter\Elasticsearch::class,
             [
                 'connectionManager' => $this->connectionManager,
                 'batchDocumentDataMapper' => $this->batchDocumentDataMapper,
@@ -213,17 +228,15 @@ class ElasticsearchTest extends TestCase
                 'options' => [],
                 'productAttributeRepository' => $this->productAttributeRepository,
                 'staticFieldProvider' => $this->staticFieldProvider,
-                'arrayManager' => $this->arrayManager
+                'arrayManager' => $this->arrayManager,
             ]
         );
     }
 
     /**
      * Test ping() method
-     *
-     * @return void
      */
-    public function testPing(): void
+    public function testPing()
     {
         $this->client->expects($this->once())
             ->method('ping')
@@ -233,35 +246,29 @@ class ElasticsearchTest extends TestCase
 
     /**
      * Test ping() method
-     *
-     * @return void
      */
-    public function testPingFailure(): void
+    public function testPingFailure()
     {
         $this->expectException(LocalizedException::class);
 
         $this->client->expects($this->once())
             ->method('ping')
-            ->willThrowException(new Exception('Something went wrong'));
+            ->willThrowException(new \Exception('Something went wrong'));
         $this->model->ping();
     }
 
     /**
      * Test prepareDocsPerStore() method
-     *
-     * @return void
      */
-    public function testPrepareDocsPerStoreEmpty(): void
+    public function testPrepareDocsPerStoreEmpty()
     {
         $this->assertEquals([], $this->model->prepareDocsPerStore([], 1));
     }
 
     /**
      * Test prepareDocsPerStore() method
-     *
-     * @return void
      */
-    public function testPrepareDocsPerStore(): void
+    public function testPrepareDocsPerStore()
     {
         $this->batchDocumentDataMapper->expects($this->once())
             ->method('map')
@@ -271,7 +278,10 @@ class ElasticsearchTest extends TestCase
                 ]
             );
         $this->assertIsArray($this->model->prepareDocsPerStore(
-            ['1' => ['name' => 'Product Name'],
+            [
+                '1' => [
+                    'name' => 'Product Name',
+                ],
             ],
             1
         ));
@@ -279,17 +289,18 @@ class ElasticsearchTest extends TestCase
 
     /**
      * Test addDocs() method
-     *
-     * @return void
      */
-    public function testAddDocs(): void
+    public function testAddDocs()
     {
         $this->client->expects($this->once())
             ->method('bulkQuery');
         $this->assertSame(
             $this->model,
             $this->model->addDocs(
-                ['1' => ['name' => 'Product Name'],
+                [
+                    '1' => [
+                        'name' => 'Product Name',
+                    ],
                 ],
                 1,
                 'product'
@@ -299,18 +310,20 @@ class ElasticsearchTest extends TestCase
 
     /**
      * Test addDocs() method
-     *
-     * @return void
      */
-    public function testAddDocsFailure(): void
+    public function testAddDocsFailure()
     {
-        $this->expectException(Exception::class);
+        $this->expectException(\Exception::class);
 
         $this->client->expects($this->once())
             ->method('bulkQuery')
-            ->willThrowException(new Exception('Something went wrong'));
+            ->willThrowException(new \Exception('Something went wrong'));
         $this->model->addDocs(
-            ['1' => ['name' => 'Product Name']],
+            [
+                '1' => [
+                    'name' => 'Product Name',
+                ],
+            ],
             1,
             'product'
         );
@@ -318,10 +331,8 @@ class ElasticsearchTest extends TestCase
 
     /**
      * Test cleanIndex() method
-     *
-     * @return void
      */
-    public function testCleanIndex(): void
+    public function testCleanIndex()
     {
         $this->indexNameResolver->expects($this->any())
             ->method('getIndexName')
@@ -350,10 +361,8 @@ class ElasticsearchTest extends TestCase
 
     /**
      * Test deleteDocs() method
-     *
-     * @return void
      */
-    public function testDeleteDocs(): void
+    public function testDeleteDocs()
     {
         $this->client->expects($this->once())
             ->method('bulkQuery');
@@ -365,28 +374,24 @@ class ElasticsearchTest extends TestCase
 
     /**
      * Test deleteDocs() method
-     *
-     * @return void
      */
-    public function testDeleteDocsFailure(): void
+    public function testDeleteDocsFailure()
     {
-        $this->expectException(Exception::class);
+        $this->expectException(\Exception::class);
 
         $this->client->expects($this->once())
             ->method('bulkQuery')
-            ->willThrowException(new Exception('Something went wrong'));
+            ->willThrowException(new \Exception('Something went wrong'));
         $this->model->deleteDocs(['1' => 1], 1, 'product');
     }
 
     /**
      * Test updateAlias() method
-     *
-     * @return void
      */
-    public function testUpdateAliasEmpty(): void
+    public function testUpdateAliasEmpty()
     {
         $model = $this->objectManager->getObject(
-            ElasticsearchAdapter::class,
+            \Magento\Elasticsearch\Model\Adapter\Elasticsearch::class,
             [
                 'connectionManager' => $this->connectionManager,
                 'batchDocumentDataMapper' => $this->batchDocumentDataMapper,
@@ -405,23 +410,25 @@ class ElasticsearchTest extends TestCase
         $this->assertEquals($model, $model->updateAlias(1, 'product'));
     }
 
-    /**
-     * @return void
-     */
-    public function testConnectException(): void
+    public function testConnectException()
     {
         $this->expectException(LocalizedException::class);
 
-        $connectionManager = $this->getMockBuilder(ConnectionManager::class)->disableOriginalConstructor()
-            ->onlyMethods(['getConnection'])
+        $connectionManager = $this->getMockBuilder(ConnectionManager::class)
+            ->disableOriginalConstructor()
+            ->setMethods(
+                [
+                    'getConnection',
+                ]
+            )
             ->getMock();
 
         $connectionManager->expects($this->any())
             ->method('getConnection')
-            ->willThrowException(new Exception('Something went wrong'));
+            ->willThrowException(new \Exception('Something went wrong'));
 
         $this->objectManager->getObject(
-            ElasticsearchAdapter::class,
+            \Magento\Elasticsearch\Model\Adapter\Elasticsearch::class,
             [
                 'connectionManager' => $connectionManager,
                 'batchDocumentDataMapper' => $this->batchDocumentDataMapper,
@@ -437,10 +444,8 @@ class ElasticsearchTest extends TestCase
 
     /**
      * Test updateAlias() method
-     *
-     * @return void
      */
-    public function testUpdateAlias(): void
+    public function testUpdateAlias()
     {
         $this->client->expects($this->atLeastOnce())
             ->method('updateAlias');
@@ -454,10 +459,8 @@ class ElasticsearchTest extends TestCase
 
     /**
      * Test updateAlias() method
-     *
-     * @return void
      */
-    public function testUpdateAliasWithOldIndex(): void
+    public function testUpdateAliasWithOldIndex()
     {
         $this->model->cleanIndex(1, 'product');
 
@@ -484,10 +487,8 @@ class ElasticsearchTest extends TestCase
 
     /**
      * Test updateAlias() method
-     *
-     * @return void
      */
-    public function testUpdateAliasWithoutOldIndex(): void
+    public function testUpdateAliasWithoutOldIndex()
     {
         $this->model->cleanIndex(1, 'product');
         $this->client->expects($this->any())
@@ -594,9 +595,9 @@ class ElasticsearchTest extends TestCase
                     ]
             ]
         ];
-        $this->client
+        $this->client->expects($this->at(1))
             ->method('createIndex')
-            ->withConsecutive([null, ['settings' => $settings]]);
+            ->with(null, ['settings' => $settings]);
         $this->model->cleanIndex(1, 'product');
     }
 
@@ -605,7 +606,7 @@ class ElasticsearchTest extends TestCase
      *
      * @return array
      */
-    protected function getClientOptions(): array
+    protected function getClientOptions()
     {
         return [
             'hostname' => 'localhost',
@@ -614,7 +615,7 @@ class ElasticsearchTest extends TestCase
             'index' => 'magento2',
             'enableAuth' => 1,
             'username' => 'user',
-            'password' => 'my-password'
+            'password' => 'my-password',
         ];
     }
 }

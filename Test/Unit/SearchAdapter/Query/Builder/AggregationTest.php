@@ -9,7 +9,6 @@ namespace Magento\Elasticsearch\Test\Unit\SearchAdapter\Query\Builder;
 
 use Magento\Elasticsearch\Model\Adapter\FieldMapperInterface;
 use Magento\Elasticsearch\SearchAdapter\Query\Builder\Aggregation;
-use Magento\Framework\Search\Request\Aggregation\TermBucket;
 use Magento\Framework\Search\Request\BucketInterface;
 use Magento\Framework\Search\RequestInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
@@ -147,21 +146,27 @@ class AggregationTest extends TestCase
             'type' => 'product',
             'body' => [],
         ];
-        $bucketName = 'category_bucket';
-
-        $requestBucketInterface = new TermBucket(
-            $bucketName,
-            'category_ids',
-            []
-        );
+        $bucketName = 'price_bucket';
 
         $this->requestInterface
             ->method('getAggregation')
-            ->willReturn([$requestBucketInterface]);
+            ->willReturn([$this->requestBucketInterface]);
 
         $this->fieldMapper
             ->method('getFieldName')
             ->willReturn('price');
+
+        $this->requestBucketInterface
+            ->method('getField')
+            ->willReturn('price');
+
+        $this->requestBucketInterface
+            ->method('getType')
+            ->willReturn(BucketInterface::TYPE_TERM);
+
+        $this->requestBucketInterface
+            ->method('getName')
+            ->willReturn($bucketName);
 
         $result = $this->model->build($this->requestInterface, $query);
 
