@@ -23,8 +23,6 @@ use Magento\Elasticsearch\Elasticsearch5\SearchAdapter\Query\Builder as Elastics
  */
 class Builder extends Elasticsearch5Builder
 {
-    private const ELASTIC_INT_MAX = 2147483647;
-
     /**
      * @var Sort
      */
@@ -63,7 +61,7 @@ class Builder extends Elasticsearch5Builder
             'index' => $this->searchIndexNameResolver->getIndexName($storeId, $request->getIndex()),
             'type' => $this->clientConfig->getEntityType(),
             'body' => [
-                'from' => min(self::ELASTIC_INT_MAX, $request->getFrom()),
+                'from' => $request->getFrom(),
                 'size' => $request->getSize(),
                 'fields' => ['_id', '_score'],
                 'sort' => $this->sortBuilder->getSort($request),

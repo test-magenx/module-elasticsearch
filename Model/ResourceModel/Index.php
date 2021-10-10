@@ -6,7 +6,6 @@
 namespace Magento\Elasticsearch\Model\ResourceModel;
 
 use Magento\Catalog\Model\Indexer\Product\Price\DimensionCollectionFactory;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Model\ResourceModel\Db\Context;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
@@ -138,11 +137,7 @@ class Index extends \Magento\AdvancedSearch\Model\ResourceModel\Index
 
         foreach ($categoryPositions as $productId => $positions) {
             foreach ($positions as $categoryId => $position) {
-                try {
-                    $category = $this->categoryRepository->get($categoryId, $storeId);
-                } catch (NoSuchEntityException $e) {
-                    continue;
-                }
+                $category = $this->categoryRepository->get($categoryId, $storeId);
                 $categoryName = $category->getName();
                 $categoryData[$productId][] = [
                     'id' => $categoryId,

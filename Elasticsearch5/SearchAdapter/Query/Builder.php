@@ -22,8 +22,6 @@ use Magento\Framework\App\ScopeResolverInterface;
  */
 class Builder
 {
-    private const ELASTIC_INT_MAX = 2147483647;
-
     /**
      * @var Config
      * @since 100.2.2
@@ -85,18 +83,18 @@ class Builder
     {
         $dimension = current($request->getDimensions());
         $storeId = $this->scopeResolver->getScope($dimension->getValue())->getId();
+
         $searchQuery = [
             'index' => $this->searchIndexNameResolver->getIndexName($storeId, $request->getIndex()),
             'type' => $this->clientConfig->getEntityType(),
             'body' => [
-                'from' => min(self::ELASTIC_INT_MAX, $request->getFrom()),
+                'from' => $request->getFrom(),
                 'size' => $request->getSize(),
                 'stored_fields' => ['_id', '_score'],
                 'sort' => $this->sortBuilder->getSort($request),
                 'query' => [],
             ],
         ];
-
         return $searchQuery;
     }
 
